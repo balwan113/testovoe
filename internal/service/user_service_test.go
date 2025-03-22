@@ -2,11 +2,11 @@ package service
 
 import (
 	"context"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
+	"errors"
 	"testing"
 	"testovoe/internal/models"
-	"testovoe/internal/repository"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 type MockUserRepository struct {
@@ -39,11 +39,11 @@ func TestCreateUser_EmptyFields(t *testing.T) {
 
 	user := &models.User{Name: "", Email: "test@example.com"}
 	err := service.CreateUser(context.Background(), user)
-	assert.Equal(t, ErrEmptyFields, err)
+	assert.Equal(t, errors.New("Имя или email не могут быть пустыми"), err)
 
 	user = &models.User{Name: "Test User", Email: ""}
 	err = service.CreateUser(context.Background(), user)
-	assert.Equal(t, ErrEmptyFields, err)
+	assert.Equal(t, errors.New("Имя или email не могут быть пустыми"), err)
 
 	mockRepo.AssertNotCalled(t, "CreateUser")
 }
@@ -63,10 +63,10 @@ func TestGetUserByID_NotFound(t *testing.T) {
 	mockRepo := new(MockUserRepository)
 	service := NewUserService(mockRepo)
 
-	mockRepo.On("GetUserByID", mock.Anything, int64(1)).Return((*models.User)(nil), repository.ErrUserNotFound)
+	mockRepo.On("GetUserByID", mock.Anything, int64(1)).Return((*models.User)(nil), errors.New("пользователь не найден"))
 
 	user, err := service.GetUser(context.Background(), 1)
-	assert.Equal(t, repository.ErrUserNotFound, err)
+	assert.Equal(t, errors.New("пользователь не найден"), err)
 	assert.Nil(t, user)
 	mockRepo.AssertExpectations(t)
 }
@@ -101,11 +101,11 @@ func TestUpdateUserByID_EmptyFields(t *testing.T) {
 
 	user := &models.User{Name: "", Email: "updated@example.com"}
 	err := service.UpdateUser(context.Background(), 1, user)
-	assert.Equal(t, ErrEmptyFields, err)
+	assert.Equal(t, errors.New("Имя или email не могут быть пустыми"), err)
 
 	user = &models.User{Name: "Updated User", Email: ""}
 	err = service.UpdateUser(context.Background(), 1, user)
-	assert.Equal(t, ErrEmptyFields, err)
+	assert.Equal(t, errors.New("Имя или email не могут быть пустыми"), err)
 
 	mockRepo.AssertNotCalled(t, "UpdateUserByID")
 }
@@ -125,9 +125,9 @@ func TestDeleteUserByID_NotFound(t *testing.T) {
 	mockRepo := new(MockUserRepository)
 	service := NewUserService(mockRepo)
 
-	mockRepo.On("DeleteUserByID", mock.Anything, int64(1)).Return(repository.ErrUserNotFound)
+	mockRepo.On("DeleteUserByID", mock.Anything, int64(1)).Return(errors.New("пользователь не найден"))
 
 	err := service.DeleteUser(context.Background(), 1)
-	assert.Equal(t, repository.ErrUserNotFound, err)
+	assert.Equal(t,errors.New("пользователь не найден"), err)
 	mockRepo.AssertExpectations(t)
 }

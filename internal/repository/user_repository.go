@@ -9,14 +9,7 @@ import (
 	"testovoe/internal/models"
 )
 
-var ErrUserNotFound = errors.New("пользователь не найден")
 
-type UserRepositoryInterface interface {
-	CreateUser(ctx context.Context, user *models.User) error
-	GetUser(ctx context.Context, id int64) (*models.User, error)
-	UpdateUser(ctx context.Context, id int64, user *models.User) error
-	DeleteUser(ctx context.Context, id int64) error
-}
 
 type UserRepository struct {
 	db *pgxpool.Pool
@@ -41,7 +34,7 @@ func (r *UserRepository) GetUser(ctx context.Context, id int64) (*models.User, e
 	var user models.User
 	if err := r.db.QueryRow(ctx, query, id).Scan(&user.ID, &user.Name, &user.Email); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrUserNotFound
+			return nil, errors.New("пользователь не найден")
 		}
 		return nil, fmt.Errorf("ошибка при получении пользователя: %w", err)
 	}
@@ -55,7 +48,7 @@ func (r *UserRepository) UpdateUser(ctx context.Context, id int64, user *models.
 		return fmt.Errorf("ошибка при обновлении пользователя с id %d: %w", id, err)
 	}
 	if cmdTag.RowsAffected() == 0 {
-		return ErrUserNotFound
+		return errors.New("пользователь не найден")
 	}
 	return nil
 }
@@ -67,7 +60,7 @@ func (r *UserRepository) DeleteUser(ctx context.Context, id int64) error {
 		return fmt.Errorf("ошибка при удалении пользователя с id %d: %w", id, err)
 	}
 	if cmdTag.RowsAffected() == 0 {
-		return ErrUserNotFound
+		return errors.New("пользователь не найден")
 	}
 	return nil
 }

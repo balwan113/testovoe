@@ -4,14 +4,15 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"github.com/gin-gonic/gin"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"testovoe/internal/models"
-	"testovoe/internal/service"
+
+	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 type MockUserService struct {
@@ -108,7 +109,7 @@ func TestGetUserByID_NotFound(t *testing.T) {
 	handler := NewUserHandler(mockService)
 	router := setupRouter(handler)
 
-	mockService.On("GetUserByID", mock.Anything, int64(999)).Return((*models.User)(nil), service.ErrUserNotFound)
+	mockService.On("GetUserByID", mock.Anything, int64(999)).Return((*models.User)(nil), errors.New("Пользователь не найден"))
 
 	req, _ := http.NewRequest("GET", "/users/999", nil)
 	w := httptest.NewRecorder()

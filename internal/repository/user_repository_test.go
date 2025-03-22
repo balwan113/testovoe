@@ -2,15 +2,17 @@ package repository
 
 import (
 	"context"
+	"errors"
+	"strings"
+	"testing"
+	"testovoe/internal/models"
+	"time"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/assert"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
-	"strings"
-	"testing"
-	"testovoe/internal/models"
-	"time"
 )
 
 func setupDBConfig(t *testing.T) (*pgxpool.Pool, func()) {
@@ -103,7 +105,7 @@ func TestGetUserByID(t *testing.T) {
 	assert.Equal(t, "max@example.com", user.Email)
 
 	_, err = repo.GetUser(context.Background(), 999)
-	assert.Equal(t, ErrUserNotFound, err)
+	assert.Equal(t, errors.New("пользователь не найден"), err)
 }
 
 func TestUpdateUserByID(t *testing.T) {
@@ -128,7 +130,7 @@ func TestUpdateUserByID(t *testing.T) {
 	assert.Equal(t, "charlie.updated@example.com", updatedUser.Email)
 
 	err = repo.UpdateUser(context.Background(), 999, updateUser)
-	assert.Equal(t, ErrUserNotFound, err)
+	assert.Equal(t, errors.New("пользователь не найден"), err)
 }
 
 func TestDeleteUserByID(t *testing.T) {
@@ -145,7 +147,7 @@ func TestDeleteUserByID(t *testing.T) {
 	assert.NoError(t, err)
 
 	_, err = repo.GetUser(context.Background(), userID)
-	assert.Equal(t, ErrUserNotFound, err)
+	assert.Equal(t, errors.New("пользователь не найден"), err)
 }
 
 func TestCreateUser_LongFields(t *testing.T) {

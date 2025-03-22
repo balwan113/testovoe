@@ -17,7 +17,7 @@ func main() {
 	userService := service.NewUserService(userRepo)
 	userHandler := handler.NewUserHandler(userService)
 
-	r := router.SetupRouter(userHandler)
+	r := router.SPRouter(userHandler)
 
 	if err := r.Run(":8080"); err != nil {
 		log.Fatalf("ошибка при запуске сервера: %v", err)

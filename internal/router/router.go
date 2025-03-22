@@ -5,7 +5,7 @@ import (
 	"testovoe/internal/handler"
 )
 
-func SetupRouter(userHandler *handler.UserHandler) *gin.Engine {
+func SPRouter(userHandler *handler.UserHandler) *gin.Engine {
 	r := gin.Default()
 
 	api := r.Group("/users")

@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"testovoe/internal/models"
+	"testovoe/internal/domain"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -19,17 +19,17 @@ type MockUserService struct {
 	mock.Mock
 }
 
-func (m *MockUserService) CreateUser(ctx context.Context, user *models.User) error {
+func (m *MockUserService) CreateUser(ctx context.Context, user *domain.User) error {
 	args := m.Called(ctx, user)
 	return args.Error(0)
 }
 
-func (m *MockUserService) GetUser(ctx context.Context, id int64) (*models.User, error) {
+func (m *MockUserService) GetUser(ctx context.Context, id int64) (*domain.User, error) {
 	args := m.Called(ctx, id)
-	return args.Get(0).(*models.User), args.Error(1)
+	return args.Get(0).(*domain.User), args.Error(1)
 }
 
-func (m *MockUserService) UpdateUser(ctx context.Context, id int64, user *models.User) error {
+func (m *MockUserService) UpdateUser(ctx context.Context, id int64, user *domain.User) error {
 	args := m.Called(ctx, id, user)
 	return args.Error(0)
 }
@@ -53,7 +53,7 @@ func TestCreateUser(t *testing.T) {
 	handler := NewUserHandler(mockService)
 	router := setupRouter(handler)
 
-	user := models.User{Name: "test", Email: "test@example.com"}
+	user := domain.User{Name: "test", Email: "test@example.com"}
 	mockService.On("CreateUser", mock.Anything, &user).Return(nil)
 
 	body, _ := json.Marshal(user)
@@ -90,7 +90,7 @@ func TestGetUserByID(t *testing.T) {
 	handler := NewUserHandler(mockService)
 	router := setupRouter(handler)
 
-	user := &models.User{ID: 1, Name: "test", Email: "test@example.com"}
+	user := &domain.User{ID: 1, Name: "test", Email: "test@example.com"}
 	mockService.On("GetUserByID", mock.Anything, int64(1)).Return(user, nil)
 
 	req, _ := http.NewRequest("GET", "/users/1", nil)
@@ -109,7 +109,7 @@ func TestGetUserByID_NotFound(t *testing.T) {
 	handler := NewUserHandler(mockService)
 	router := setupRouter(handler)
 
-	mockService.On("GetUserByID", mock.Anything, int64(999)).Return((*models.User)(nil), errors.New("Пользователь не найден"))
+	mockService.On("GetUserByID", mock.Anything, int64(999)).Return((*domain.User)(nil), errors.New("Пользователь не найден"))
 
 	req, _ := http.NewRequest("GET", "/users/999", nil)
 	w := httptest.NewRecorder()
@@ -126,7 +126,7 @@ func TestUpdateUserByID(t *testing.T) {
 	handler := NewUserHandler(mockService)
 	router := setupRouter(handler)
 
-	user := models.User{Name: "updated", Email: "updated@example.com"}
+	user := domain.User{Name: "updated", Email: "updated@example.com"}
 	mockService.On("UpdateUserByID", mock.Anything, int64(1), &user).Return(nil)
 
 	body, _ := json.Marshal(user)

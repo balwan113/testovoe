@@ -5,7 +5,7 @@ import (
 	"errors"
 	"strings"
 	"testing"
-	"testovoe/internal/models"
+	"testovoe/internal/domain"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -18,7 +18,6 @@ import (
 func setupDBConfig(t *testing.T) (*pgxpool.Pool, func()) {
 	ctx := context.Background()
 
-	// Запуск контейнера с PostgreSQL
 	pgContainer, err := postgres.Run(ctx, "postgres:17-alpine",
 		postgres.WithDatabase("test_db"),
 		postgres.WithUsername("user"),
@@ -70,19 +69,19 @@ func TestCreateUser(t *testing.T) {
 
 	repo := NewUserRepository(pool)
 
-	newUser := &models.User{Name: "John Doe", Email: "john.doe@example.com"}
+	newUser := &domain.User{Name: "John Doe", Email: "john.doe@example.com"}
 	err := repo.CreateUser(context.Background(), newUser)
 	assert.NoError(t, err)
 	assert.NotZero(t, newUser.ID)
 
-	var fetchedUser models.User
+	var fetchedUser domain.User
 	err = pool.QueryRow(context.Background(), "SELECT id, name, email FROM users WHERE id = $1", newUser.ID).
 		Scan(&fetchedUser.ID, &fetchedUser.Name, &fetchedUser.Email)
 	assert.NoError(t, err)
 	assert.Equal(t, newUser.Name, fetchedUser.Name)
 	assert.Equal(t, newUser.Email, fetchedUser.Email)
 
-	duplicateUser := &models.User{Name: "Jane Doe", Email: "john.doe@example.com"}
+	duplicateUser := &domain.User{Name: "Jane Doe", Email: "john.doe@example.com"}
 	err = repo.CreateUser(context.Background(), duplicateUser)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "duplicate key value violates unique constraint")
@@ -118,11 +117,11 @@ func TestUpdateUserByID(t *testing.T) {
 	err := pool.QueryRow(context.Background(), "INSERT INTO users (name, email) VALUES ($1, $2) RETURNING id", "Charlie", "charlie@example.com").Scan(&userID)
 	assert.NoError(t, err)
 
-	updateUser := &models.User{Name: "Charlie Updated", Email: "charlie.updated@example.com"}
+	updateUser := &domain.User{Name: "Charlie Updated", Email: "charlie.updated@example.com"}
 	err = repo.UpdateUser(context.Background(), userID, updateUser)
 	assert.NoError(t, err)
 
-	var updatedUser models.User
+	var updatedUser domain.User
 	err = pool.QueryRow(context.Background(), "SELECT id, name, email FROM users WHERE id = $1", userID).
 		Scan(&updatedUser.ID, &updatedUser.Name, &updatedUser.Email)
 	assert.NoError(t, err)
@@ -157,13 +156,13 @@ func TestCreateUser_LongFields(t *testing.T) {
 	repo := NewUserRepository(pool)
 
 	longName := strings.Repeat("a", 101)
-	user := &models.User{Name: longName, Email: "longname@example.com"}
+	user := &domain.User{Name: longName, Email: "longname@example.com"}
 	err := repo.CreateUser(context.Background(), user)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "value too long for type character varying(100)")
 
 	longEmail := strings.Repeat("b", 101) + "@example.com"
-	user = &models.User{Name: "Long Email", Email: longEmail}
+	user = &domain.User{Name: "Long Email", Email: longEmail}
 	err = repo.CreateUser(context.Background(), user)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "value too long for type character varying(100)")
